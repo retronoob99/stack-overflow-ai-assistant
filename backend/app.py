@@ -21,5 +21,26 @@ app.add_middleware(
     allow_origins=["*"],  # Allow all origins for development, restrict in production
     allow_methods=["*"],  # allow all methods
     allow_headers=["*"],  # allow all headers
-    alloqw_credentials=True,
+    allow_credentials=True,
 )
+
+# Initialize RAG Pipeline
+pipeline: Optional[RAGPipeline] = None
+
+# Startup event to initialize the RAG pipeline
+@app.on_event("startup")
+async def startup_event():
+    global pipeline
+    
+    print("🚀 Starting Stack Overflow AI Assistant API...")
+
+    pipeline = RAGPipeline(
+        vector_store_path=os.getenv("VECTOR_STORE_PATH"),
+        answers_path=os.getenv("ANSWERS_PATH"),
+        score_threshold=0.5,
+    )
+    print("✅ RAG Pipeline initialized successfully!")
+
+    yield
+
+    print("🛑 Shutting down Stack Overflow AI Assistant API..." )
