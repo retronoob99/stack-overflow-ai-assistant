@@ -44,3 +44,22 @@ async def startup_event():
     yield
 
     print("🛑 Shutting down Stack Overflow AI Assistant API..." )
+
+# Request model
+class ChatRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+class SourceCard(BaseModel):
+    rank: int
+    question_id: int
+    title: str
+    primary_tag: str
+    top_answers: List[str]
+
+class ChatResponse(BaseModel):
+    answer: str
+    is_relevant: bool
+    is_tech: bool
+    sources: List[SourceCard]
+    path: str

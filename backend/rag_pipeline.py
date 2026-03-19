@@ -262,11 +262,23 @@ class RAGPipeline:
             context = self.context_builder.build(retrieved_docs, answers_map)
             answer = self.llm_caller.call_rag(query, context)
 
+            sources = []
+            for doc in retrieved_docs[:3]:
+                qid = doc['question_id']
+                answers = answers_map.get(qid, [])
+                sources.append({
+                    "rank" : doc["rank"],
+                    "question_id" : qid,
+                    "primary_tag" : doc['primary_tag'],
+                    "title"       : doc["title"],
+                    "top_answers" : [a["body"][:300] for a in answers[:3]]
+                })
+            
             return {
                 "answer" : answer,
                 "is_relevant" : True,
                 "is_tech" : True,
-                "sources" : retrieved_docs,
+                "sources" : sources,
                 "path" : "rag"
             }
         
