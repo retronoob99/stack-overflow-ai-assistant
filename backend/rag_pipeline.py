@@ -315,7 +315,7 @@ class RAGPipeline:
                     "question_id" : qid,
                     "primary_tag" : doc['primary_tag'],
                     "title"       : doc["title"],
-                    "top_answers" : [a["body"][:300] for a in answers[:3]]
+                    "top_answers" : [a["body"] for a in answers[:1]]
                 })
             
             return {
