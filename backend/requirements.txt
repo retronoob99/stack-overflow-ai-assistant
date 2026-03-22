@@ -18,3 +18,4 @@ langchain-groq
 python-dotenv
 langchain-google-genai
 fastapi
+huggingface-hub
