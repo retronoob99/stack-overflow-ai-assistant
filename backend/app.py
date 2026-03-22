@@ -20,6 +20,36 @@ pipeline: Optional[RAGPipeline] = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global pipeline
+    # ── Paths ─────────────────────────────────────────────────────────────
+    data_dir          = "/tmp/data"
+    vector_store_dir  = f"{data_dir}/vector_store"
+    answers_path      = f"{data_dir}/answers_cleaned.parquet"
+
+    os.makedirs(vector_store_dir, exist_ok=True)
+
+    # ── Download from Hugging Face if not exists ───────────────────────────
+    print("📥 Downloading data from Hugging Face...")
+
+    hf_hub_download(
+        repo_id   = "retronoob99/stackoverflow-ai-data",  # ← your HF username/repo
+        filename  = "questions.index",
+        repo_type = "dataset",
+        local_dir = vector_store_dir
+    )
+    hf_hub_download(
+        repo_id   = "retronoob99/stackoverflow-ai-data",
+        filename  = "questions_docs.pkl",
+        repo_type = "dataset",
+        local_dir = vector_store_dir
+    )
+    hf_hub_download(
+        repo_id   = "retronoob99/stackoverflow-ai-data",
+        filename  = "answers_cleaned.parquet",
+        repo_type = "dataset",
+        local_dir = data_dir
+    )
+
+    print("✅ Data downloaded successfully!")
     
     print("🚀 Starting Stack Overflow AI Assistant API...")
 
