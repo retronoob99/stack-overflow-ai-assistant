@@ -139,15 +139,42 @@ Answer:"""
     
 
 class Guardrail:
-    # Check if the question is tech related and if the answer is based on the context
+    '''Checks if query is programming or tech related before processing'''
 
     def __init__(self, llm_caller: LLMcaller):
         self.llm = llm_caller.llm
 
-    def is_tech_query(self, query: str) -> bool:
-        # Returns True if the query is tech related, False otherwise
+    def is_greeting(self, query: str) -> bool:
+        '''Checks if query is a greeting'''
+        greetings = [
+            "hi", "hello", "hey", "hii", "helo",
+            "good morning", "good evening", "good afternoon",
+            "howdy", "greetings", "sup", "what's up", "whats up"
+        ]
+        return query.strip().lower() in greetings
 
-        checking_prompt = f"""You are a strict query classifier for a Stack Overflow programming assistant.
+    def get_greeting_response(self) -> str:
+        '''Returns a friendly intro message for greetings'''
+        return """👋 Hello! I'm your Stack Overflow AI Assistant.
+
+I can help you with:
+  • 🐍 Python, JavaScript, Java, C++ and more
+  • 🌐 Web development (HTML, CSS, React)
+  • 🗄️ Databases and SQL
+  • 🔧 Debugging and error fixing
+  • 💡 Programming concepts and best practices
+
+Ask me any programming or tech question and I'll find the best answers from Stack Overflow's knowledge base!
+
+**Try asking:**
+  • "How do I reverse a list in Python?"
+  • "What is async/await in JavaScript?"
+  • "How to fix a NullPointerException in Java?" """
+
+    def is_tech_query(self, query: str) -> bool:
+        '''Returns True if query is programming/tech related'''
+
+        classification_prompt = f"""You are a strict query classifier for a Stack Overflow programming assistant.
 
 Classify if the following query is related to:
 - Programming / coding
@@ -161,18 +188,23 @@ Classify if the following query is related to:
 Reply with ONLY "YES" or "NO". No explanation, no punctuation, just YES or NO.
 
 Query: {query}"""
-        
+
         response = self.llm.invoke([
-            HumanMessage(content=checking_prompt)
+            HumanMessage(content=classification_prompt)
         ])
 
         answer = response.content.strip().upper()
         return answer == "YES"
-    
-    def get_rejection_message(self, query:str) -> str:
-        # returns the rejection message for non-tech queries
 
-        return f"""Sorry, but your question doesn't seem to be related to programming or technology."""
+    def get_rejection_message(self, query: str) -> str:
+        '''Returns a polite rejection message for non-tech queries'''
+        return """⛔ I'm a programming and tech assistant — I can only answer coding and technology related questions.
+
+Try asking something like:
+  • "How do I reverse a list in Python?"
+  • "What is async/await in JavaScript?"
+  • "How to fix a NullPointerException in Java?"
+  • "What is the difference between SQL and NoSQL?" """
 
 
 class RAGPipeline:
@@ -198,12 +230,24 @@ class RAGPipeline:
 
         print("RAG Pipeline initialized")
 
-    def run(self, query: str, top_k: int = 5) -> str:
+    def run(self, query: str, top_k: int = 5) -> dict:
         # Runs the RAG pipeline for a given query
 
         print(f"\n{'=' * 50}")
         print(f"Query: {query}")
         print(f"{'=' * 50}")
+        
+        # Step 0: Check for greetings
+        if self.guardrail.is_greeting(query):
+            print("Query is a greeting. Returning greeting response.")
+            return {
+                "answer" : self.guardrail.get_greeting_response(),
+                "is_relevant" : False,
+                "is_tech" : False,
+                "sources" : [],
+                "path" : "greeting"
+            }
+
 
         # Step 1: Guardrail check
         print("Checking if query is tech related...")
@@ -216,7 +260,7 @@ class RAGPipeline:
             return {
                 "answer" : self.guardrail.get_rejection_message(query),
                 "is_relevant" : False,
-                "is_tech_query" : False,
+                "is_tech" : False,
                 "sources" : [],
                 "path" : "rejected"
             }
