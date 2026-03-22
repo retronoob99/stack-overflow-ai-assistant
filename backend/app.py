@@ -54,8 +54,8 @@ async def lifespan(app: FastAPI):
     print("🚀 Starting Stack Overflow AI Assistant API...")
 
     pipeline = RAGPipeline(
-        vector_store_path=os.getenv("VECTOR_STORE_PATH"),
-        answers_path=os.getenv("ANSWERS_PATH"),
+        vector_store_path=vector_store_dir,
+        answers_path=answers_path,
         score_threshold=0.5,
     )
     print("✅ RAG Pipeline initialized successfully!")
