@@ -20,18 +20,28 @@ pipeline: Optional[RAGPipeline] = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global pipeline
-    # ── Paths ─────────────────────────────────────────────────────────────
-    data_dir          = "/tmp/data"
-    vector_store_dir  = f"{data_dir}/vector_store"
-    answers_path      = f"{data_dir}/answers_cleaned.parquet"
+
+    import asyncio
+
+    # Start downloading in background
+    asyncio.create_task(initialize_pipeline())
+
+    yield
+    print("🛑 Shutting down...")
+
+async def initialize_pipeline():
+    global pipeline
+
+    data_dir         = "/tmp/data"
+    vector_store_dir = f"{data_dir}/vector_store"
+    answers_path     = f"{data_dir}/answers_cleaned.parquet"
 
     os.makedirs(vector_store_dir, exist_ok=True)
 
-    # ── Download from Hugging Face if not exists ───────────────────────────
     print("📥 Downloading data from Hugging Face...")
 
     hf_hub_download(
-        repo_id   = "retronoob99/stackoverflow-ai-data",  # ← your HF username/repo
+        repo_id   = "retronoob99/stackoverflow-ai-data",
         filename  = "questions.index",
         repo_type = "dataset",
         local_dir = vector_store_dir
@@ -49,20 +59,14 @@ async def lifespan(app: FastAPI):
         local_dir = data_dir
     )
 
-    print("✅ Data downloaded successfully!")
-    
-    print("🚀 Starting Stack Overflow AI Assistant API...")
+    print("✅ Data downloaded!")
 
     pipeline = RAGPipeline(
-        vector_store_path=vector_store_dir,
-        answers_path=answers_path,
-        score_threshold=0.5,
+        vector_store_path = vector_store_dir,
+        answers_path      = answers_path,
+        score_threshold   = 0.5
     )
-    print("✅ RAG Pipeline initialized successfully!")
-
-    yield
-
-    print("🛑 Shutting down Stack Overflow AI Assistant API..." )
+    print("✅ RAG Pipeline ready!")
 
 # Initialize FastAPI app
 app = FastAPI(
