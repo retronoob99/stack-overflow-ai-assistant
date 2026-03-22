@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Stack Overflow AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-high": "var(--surface-container-high)",
+                        "primary-container": "var(--primary-container)",
+                        "background": "var(--background)",
+                        "surface-bright": "var(--surface-bright)",
+                        "surface": "var(--surface)",
+                        "primary-fixed-dim": "#ffb787",
+                        "on-surface": "var(--on-surface)",
+                        "on-surface-variant": "var(--on-surface-variant)",
+                        "inverse-surface": "#dfe2eb",
+                        "surface-container-lowest": "var(--surface-container-lowest)",
+                        "secondary-container": "var(--secondary-container)",
+                        "on-secondary-container": "var(--on-secondary-container)",
+                        "outline-variant": "var(--outline-variant)",
+                        "surface-container-highest": "var(--surface-container-highest)",
+                        "primary": "var(--primary)",
+                        "surface-container-low": "var(--surface-container-low)"
+                    },
+                    fontFamily: {
+                        "body": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+    <style>
+        :root {
+            --surface: #ffffff;
+            --background: #f8f9fa;
+            --surface-container-high: #f1f3f4;
+            --surface-container-low: #f8f9fa;
+            --surface-container-highest: #e8eaed;
+            --surface-container-lowest: #ffffff;
+            --surface-bright: #f1f3f4;
+            --on-surface: #202124;
+            --on-surface-variant: #5f6368;
+            --outline-variant: #dadce0;
+            --primary-container: #f48225;
+            --on-primary-container: #ffffff;
+            --secondary-container: #e8f0fe;
+            --on-secondary-container: #1967d2;
+            --primary: #f48225;
+        }
+        .dark {
+            --surface: #10141a;
+            --background: #10141a;
+            --surface-container-high: #262a31;
+            --surface-container-low: #181c22;
+            --surface-container-highest: #31353c;
+            --surface-container-lowest: #0a0e14;
+            --surface-bright: #353940;
+            --on-surface: #dfe2eb;
+            --on-surface-variant: #ddc1b1;
+            --outline-variant: #564336;
+            --primary-container: #f48225;
+            --on-primary-container: #5b2a00;
+            --secondary-container: #0064e0;
+            --on-secondary-container: #e7ebff;
+            --primary: #ffb787;
+        }
+        
+        .custom-input {
+            background-color: var(--surface-container-highest) !important;
+            border: 1px solid var(--outline-variant) !important;
+            color: var(--on-surface) !important;
+        }
+        .custom-input:focus {
+            outline: 2px solid var(--primary-container) !important;
+        }
+        .custom-input::placeholder {
+            color: var(--on-surface-variant) !important;
+            opacity: 0.6 !important;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #31353c; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f48225; }
+        .glass-effect {
+            background: rgba(49, 53, 60, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        
+        /* Markdown Styles */
+        .markdown-body p { margin-bottom: 1em; }
+        .markdown-body pre { 
+            padding: 1.5rem 1rem; 
+            background: #0a0e14; 
+            border: 1px solid rgba(86, 67, 54, 0.1); 
+            border-radius: 0.5rem; 
+            overflow-x: auto; 
+            margin-top: 1.5rem;
+            position: relative;
+        }
+        .markdown-body code { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .markdown-body pre code { background: transparent; padding: 0; color: #dfe2eb; }
+        .markdown-body :not(pre) > code { 
+            background: #31353c; 
+            padding: 0.125rem 0.375rem; 
+            border-radius: 0.25rem; 
+            font-size: 0.875rem; 
+        }
+        .markdown-body ul { list-style-type: disc; padding-left: 2rem; margin-bottom: 1em; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 2rem; margin-bottom: 1em; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 700; margin-top: 1.5em; margin-bottom: 0.5em; }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #dfe2eb;
+            border-radius: 50%;
+            animation: typing 1.4s infinite both;
+            margin: 0 2px;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body h-screen flex flex-col overflow-hidden">
+    <!-- TopAppBar -->
+    <header class="fixed top-0 w-full flex items-center justify-between px-6 h-16 bg-[#10141a] z-50">
+        <div class="text-[#f48225] font-black text-xl tracking-tighter flex items-center gap-2">
+            <span class="material-symbols-outlined text-2xl" data-icon="terminal">terminal</span>
+            <span class="hidden md:inline">Stack Overflow AI Assistant</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-[#181c22] transition-colors duration-200 text-[#dfe2eb]">
+                <span class="material-symbols-outlined" data-icon="light_mode">light_mode</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- SideNavBar -->
+    <aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r border-[#262a31] bg-[#10141a] w-64 z-40 pt-20 pb-4 flex-shrink-0">
+        <nav class="flex flex-col h-full">
+            <div class="space-y-1">
+                <button onclick="startNewChat()" class="w-full flex items-center gap-3 px-6 py-3 text-[#f48225] font-bold border-r-2 border-[#f48225] bg-transparent transition-all duration-200 translate-x-1 hover:bg-[#181c22]">
+                    <span class="material-symbols-outlined" data-icon="add_comment">add_comment</span>
+                    <span class="font-['Inter'] text-sm font-medium">New Chat</span>
+                </button>
+            </div>
+            
+            <div class="px-6 py-4 mt-2 text-[#dfe2eb]/50 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                <span>History</span>
+            </div>
+            
+            <div id="history-list" class="flex-1 overflow-y-auto space-y-0.5">
+                <!-- History Items will be rendered here -->
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 lg:ml-64 pt-16 flex flex-col relative w-full overflow-hidden">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="flex-1 flex flex-col items-center justify-center px-6 transition-opacity duration-500 overflow-y-auto w-full pb-32">
+            <div class="max-w-3xl w-full text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 mt-12">
+                <div class="flex justify-center">
+                    <div class="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center shadow-2xl">
+                        <svg class="w-12 h-12" fill="none" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M84 95H24V65H18V101H90V65H84V95Z" fill="#BCBBBB"></path>
+                            <path d="M33 84H75V78H33V84Z" fill="#F48225"></path>
+                            <path d="M34.5098 67.2452L75.3622 75.9288L76.621 69.9996L35.7686 61.316L34.5098 67.2452Z" fill="#F48225"></path>
+                            <path d="M40.1018 49.378L78.0494 65.5786L80.4496 59.978L42.502 43.7774L40.1018 49.378Z" fill="#F48225"></path>
+                            <path d="M49.6521 33.3713L83.3323 57.1706L86.8523 52.1906L53.1721 28.3913L49.6521 33.3713Z" fill="#F48225"></path>
+                            <path d="M62.6511 20.3015L90.4137 50.3151L94.8489 46.2151L67.0863 16.2015L62.6511 20.3015Z" fill="#F48225"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h1 class="text-on-surface text-[2.75rem] font-bold tracking-tight leading-tight">
+                        Stack Overflow AI Assistant
+                    </h1>
+                    <p class="text-on-surface-variant text-lg max-w-xl mx-auto font-medium">
+                        Ask any programming question. Curated insights powered by the world's developer community.
+                    </p>
+                </div>
+
+                <!-- Suggestion Chips -->
+                <div id="suggestion-chips-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 w-full text-left">
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat History -->
+        <div id="chat-history" class="hidden flex-1 overflow-y-auto w-full px-4 sm:px-8 py-6 pb-32">
+            <div id="chat-container" class="max-w-4xl mx-auto w-full flex flex-col gap-6">
+                <!-- Messages will be injected here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-background via-background to-transparent z-40">
+            <div class="max-w-3xl mx-auto">
+                <div class="relative flex items-center group">
+                    <div class="absolute left-4 opacity-50 text-on-surface-variant group-focus-within:text-primary transition-colors">
+                        <span class="material-symbols-outlined" data-icon="auto_fix">auto_fix</span>
+                    </div>
+                    <input id="chat-input" class="w-full custom-input rounded-full py-4 pl-12 pr-28 text-sm text-on-surface transition-all outline-none" placeholder="Ask a technical question..." type="text" onkeypress="handleKeyPress(event)"/>
+                    <button onclick="toggleVoiceInput()" id="mic-btn" class="absolute right-14 p-2 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50 outline-none flex items-center justify-center rounded-full hover:bg-surface-bright" title="Start voice input">
+                        <span class="material-symbols-outlined text-xl" data-icon="mic">mic</span>
+                    </button>
+                    <button id="send-btn" onclick="sendMessage()" class="absolute right-2 p-2 bg-primary-container text-on-primary-container font-bold rounded-full hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none flex items-center justify-center">
+                        <span class="material-symbols-outlined" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+                    </button>
+                </div>
+                <p class="text-center mt-3 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant opacity-60">
+                    Markdown Supported • Powered by Stack Overflow Datasets & AI
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+        
+        themeToggle.addEventListener('click', () => {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                // Optional: Update colors for light mode if defined, but we're forcing dark theme aesthetic.
+                // It's mostly requested to exist, so we toggle class. The custom CSS vars are fixed, so we might need
+                // a light theme map to fully support it, but since Stitch only gave dark colors, we switch icon.
+                themeIcon.textContent = 'dark_mode';
+            } else {
+                html.classList.add('dark');
+                themeIcon.textContent = 'light_mode';
+            }
+        });
+
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const chatHistory = document.getElementById('chat-history');
+        const chatContainer = document.getElementById('chat-container');
+        
+        // Chat State
+        let isFirstMessage = true;
+        let currentSessionId = null;
+        let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
+
+        function saveSessions() {
+            localStorage.setItem('chatSessions', JSON.stringify(sessions));
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            if (!historyList) return;
+            historyList.innerHTML = '';
+            
+            // Render latest first
+            const reversedSessions = [...sessions].reverse();
+            
+            reversedSessions.forEach(session => {
+                const div = document.createElement('div');
+                const isActive = session.id === currentSessionId;
+                div.className = `group relative w-full flex items-center justify-between px-6 py-2.5 text-sm transition-all cursor-pointer ${isActive ? 'bg-[#181c22] text-[#f48225] border-r-2 border-[#f48225] translate-x-1' : 'text-[#dfe2eb]/70 hover:bg-[#181c22] hover:text-[#dfe2eb]'}`;
+                
+                div.innerHTML = `
+                    <span class="truncate flex-1 font-medium select-none" onclick="loadChat('${session.id}')">${escapeHTML(session.title)}</span>
+                    <button onclick="toggleMenu('${session.id}', event)" class="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-[#31353c] text-[#dfe2eb]/60 hover:text-[#dfe2eb] transition-all focus:opacity-100 outline-none select-none">
+                        <span class="material-symbols-outlined text-[16px]">more_vert</span>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div id="menu-${session.id}" class="hidden absolute right-6 top-8 w-36 bg-[#181c22] border border-[#262a31] rounded-lg shadow-xl z-50 flex-col py-1">
+                        <button onclick="renameSession('${session.id}', event)" class="w-full text-left px-4 py-2 hover:bg-[#262a31] text-sm text-[#dfe2eb] flex items-center gap-3 transition-colors outline-none focus:bg-[#262a31]">
+                            <span class="material-symbols-outlined text-[16px]">edit</span> Rename
+                        </button>
+                        <button onclick="deleteSession('${session.id}', event)" class="w-full text-left px-4 py-2 hover:bg-red-500/10 text-sm text-red-400 flex items-center gap-3 transition-colors outline-none focus:bg-red-500/10">
+                            <span class="material-symbols-outlined text-[16px]">delete</span> Delete
+                        </button>
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        function startNewChat() {
+            currentSessionId = null;
+            isFirstMessage = true;
+            chatContainer.innerHTML = '';
+            welcomeScreen.classList.remove('hidden');
+            chatHistory.classList.add('hidden');
+            renderSuggestionChips();
+            renderHistory();
+        }
+
+        function loadChat(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+            
+            currentSessionId = id;
+            isFirstMessage = false;
+            
+            welcomeScreen.classList.add('hidden');
+            chatHistory.classList.remove('hidden');
+            chatContainer.innerHTML = '';
+            
+            session.messages.forEach((msg, index) => {
+                if (msg.role === 'user') {
+                    appendUserMessage(msg.text);
+                } else if (msg.role === 'assistant') {
+                    const prevMsg = session.messages[index - 1];
+                    const q = prevMsg && prevMsg.role === 'user' ? prevMsg.text : '';
+                    appendAssistantMessage(msg.data, q);
+                }
+            });
+            
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            renderHistory();
+        }
+
+        // Close history menus on outside click
+        document.addEventListener('click', () => {
+             document.querySelectorAll('[id^="menu-"]').forEach(el => {
+                 el.classList.add('hidden');
+                 el.classList.remove('flex');
+             });
+        });
+
+        function toggleMenu(id, event) {
+            event.stopPropagation();
+            document.querySelectorAll('[id^="menu-"]').forEach(el => {
+                if (el.id !== `menu-${id}`) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+            const menu = document.getElementById(`menu-${id}`);
+            if (menu) {
+                if (menu.classList.contains('hidden')) {
+                    menu.classList.remove('hidden');
+                    menu.classList.add('flex');
+                } else {
+                    menu.classList.add('hidden');
+                    menu.classList.remove('flex');
+                }
+            }
+        }
+
+        function deleteSession(id, event) {
+            if (event) event.stopPropagation();
+            if (confirm("Are you sure you want to delete this chat?")) {
+                sessions = sessions.filter(s => s.id !== id);
+                saveSessions();
+                
+                if (currentSessionId === id || sessions.length === 0) {
+                    startNewChat();
+                } else {
+                    renderHistory();
+                }
+            }
+        }
+
+        function renameSession(id, event) {
+            if (event) event.stopPropagation();
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+            
+            const newName = prompt("Rename chat:", session.title);
+            if (newName && newName.trim()) {
+                session.title = newName.trim();
+                saveSessions();
+                renderHistory();
+            }
+        }
+
+        const suggestions = [
+            { text: 'How do I reverse a list in Python?', icon: 'code', color: 'var(--primary)', hoverClass: 'group-hover:text-primary' },
+            { text: 'What is async/await in JavaScript?', icon: 'javascript', color: '#afc6ff', hoverClass: 'group-hover:text-[#afc6ff]' },
+            { text: 'Explain SQL JOIN types', icon: 'database', color: '#c2c7d0', hoverClass: 'group-hover:text-[#c2c7d0]' },
+            { text: 'How to center a div horizontally and vertically?', icon: 'css', color: '#ffb787', hoverClass: 'group-hover:text-[#ffb787]' },
+            { text: 'What are Docker containers?', icon: 'wysiwyg', color: '#0064e0', hoverClass: 'group-hover:text-[#0064e0]' },
+            { text: 'Explain REST vs GraphQL apis', icon: 'api', color: '#f48225', hoverClass: 'group-hover:text-[#f48225]' },
+            { text: 'How do I resolve a Git merge conflict?', icon: 'source', color: '#ddc1b1', hoverClass: 'group-hover:text-[#ddc1b1]' },
+            { text: 'What is a closure in JavaScript?', icon: 'functions', color: '#afc6ff', hoverClass: 'group-hover:text-[#afc6ff]' },
+            { text: 'How does React useEffect work?', icon: 'sync', color: '#c2c7d0', hoverClass: 'group-hover:text-[#c2c7d0]' },
+            { text: 'Describe Big O notation with examples', icon: 'speed', color: '#ffb787', hoverClass: 'group-hover:text-[#ffb787]' }
+        ];
+
+        function renderSuggestionChips() {
+            const container = document.getElementById('suggestion-chips-container');
+            if (!container) return;
+            
+            // Shuffle and pick 3
+            const shuffled = [...suggestions].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 3);
+            
+            container.innerHTML = '';
+            
+            selected.forEach(s => {
+                const btn = document.createElement('button');
+                btn.onclick = () => submitQuery(s.text);
+                btn.className = "group p-5 bg-surface-container-low hover:bg-surface-bright rounded-xl transition-all duration-200 flex flex-col justify-between h-32 border border-outline-variant text-left";
+                
+                btn.innerHTML = `
+                    <span class="material-symbols-outlined mb-2" style="color: ${s.color};" data-icon="${s.icon}">${s.icon}</span>
+                    <span class="text-sm font-semibold text-on-surface ${s.hoverClass} transition-colors">${escapeHTML(s.text)}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // Initial render
+        renderSuggestionChips();
+        renderHistory();
+
+        function submitQuery(text) {
+            chatInput.value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const query = chatInput.value.trim();
+            if (!query) return;
+
+            // Transition to chat view
+            if (isFirstMessage) {
+                welcomeScreen.classList.add('hidden');
+                chatHistory.classList.remove('hidden');
+                isFirstMessage = false;
+                
+                // Initialize session
+                currentSessionId = Date.now().toString();
+                let title = query.length > 30 ? query.substring(0, 30) + '...' : query;
+                sessions.push({ id: currentSessionId, title: title, messages: [] });
+            }
+
+            const currentSession = sessions.find(s => s.id === currentSessionId);
+
+            // Append user message
+            appendUserMessage(query);
+            
+            if (currentSession) {
+                currentSession.messages.push({ role: 'user', text: query });
+                saveSessions();
+                renderHistory();
+            }
+
+            // Clear input and disable
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // Append typing indicator
+            const typingId = appendTypingIndicator();
+            
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, top_k: 5 })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                
+                // Remove typing indicator
+                removeElement(typingId);
+                
+                // Append AI Response
+                appendAssistantMessage(data, query);
+                
+                if (currentSession) {
+                    currentSession.messages.push({ role: 'assistant', data: data });
+                    saveSessions();
+                }
+                
+            } catch (error) {
+                console.error("Error fetching chat:", error);
+                removeElement(typingId);
+                appendErrorMessage("An error occurred while generating the response. Please check if the backend is running.");
+            } finally {
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        }
+
+        function appendUserMessage(text) {
+            const msgHtml = `
+                <div class="flex justify-end mb-4">
+                    <div class="max-w-[85%] bg-secondary-container text-on-secondary-container px-6 py-4 rounded-xl rounded-br-sm shadow-lg">
+                        <p class="text-body-md font-medium">${escapeHTML(text)}</p>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+        }
+
+        function appendTypingIndicator() {
+            const id = 'typing-' + Date.now();
+            const msgHtml = `
+                <div id="${id}" class="flex justify-start mb-4">
+                    <div class="max-w-[95%] bg-surface-container-high px-6 py-6 rounded-xl rounded-bl-sm shadow-sm flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center mr-2">
+                            <span class="material-symbols-outlined text-[#5b2a00] text-sm" data-icon="bolt">bolt</span>
+                        </div>
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+            return id;
+        }
+
+        function appendErrorMessage(text) {
+            const msgHtml = `
+                <div class="flex justify-start mb-4">
+                    <div class="max-w-[95%] bg-surface-container-high px-6 py-4 rounded-xl rounded-bl-sm shadow-sm border border-red-500/50 text-red-400">
+                        <p>${escapeHTML(text)}</p>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', msgHtml);
+        }
+
+        function appendAssistantMessage(data, query = '') {
+            // Pre-sanitize hallucinated empty code blocks from the markdown string
+            // e.g., ```python\n``` or ```python \n ``` -> '' 
+            let sanitizedMarkdown = data.answer.replace(/```[a-zA-Z0-9_-]*\s*```/g, '');
+            sanitizedMarkdown = sanitizedMarkdown.replace(/```\s*```/g, '');
+            
+            // Render Answer with Markdown
+            const renderedMarkdown = marked.parse(sanitizedMarkdown);
+            
+            // Path specific elements
+            let badgeHtml = '';
+            if (data.path === 'general') {
+                badgeHtml = `
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#10141a] text-yellow-500 text-xs font-bold rounded-full mb-4 border border-yellow-500/20">
+                        <span>⚠️</span> General Knowledge
+                    </div>
+                `;
+            } else if (data.path === 'rejected') {
+                badgeHtml = `
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#10141a] text-red-500 text-xs font-bold rounded-full mb-4 border border-red-500/20">
+                        <span>⛔</span> Out of Scope
+                    </div>
+                `;
+            }
+
+            let relatedSourcesHtml = '';
+            if (data.path === 'rag' && data.sources && data.sources.length > 0) {
+                const sourceCardsHtml = data.sources.map((source, index) => {
+                    const cardId = 'card-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + '-' + index;
+                    
+                    const answers = source.top_answers || [];
+                    const ans1 = answers.length > 0 ? answers[0] : 'No answers yet';
+                    
+                    let otherAnswersHtml = '';
+                    if (answers.length > 1) {
+                        otherAnswersHtml = answers.slice(1, 3).map((ans, i) => `
+                            <div class="text-xs text-on-surface-variant border-t border-outline-variant/10 pt-3 mt-2">
+                                <strong class="text-on-surface mb-1 block">Answer ${i + 2}:</strong>
+                                <div class="whitespace-pre-wrap break-words">${escapeHTML(ans)}</div>
+                            </div>
+                        `).join('');
+                    }
+
+                    return `
+                    <div class="p-5 rounded-xl bg-surface-container-low transition-colors group border border-outline-variant/10 flex flex-col justify-start h-auto w-full relative">
+                        <div class="text-[#f48225] mb-3">
+                            <span class="material-symbols-outlined text-xl" data-icon="help_center">help_center</span>
+                        </div>
+                        <h4 class="text-sm font-semibold mb-2 group-hover:text-primary transition-colors leading-tight">${escapeHTML(source.title)}</h4>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">${escapeHTML(source.primary_tag || 'tag')}</span>
+                        </div>
+
+                        <div id="preview-${cardId}" class="text-xs text-on-surface-variant line-clamp-3 mb-2 flex-grow whitespace-pre-wrap break-words">${escapeHTML(ans1)}</div>
+
+                        <div id="expanded-${cardId}" class="hidden transition-opacity duration-500 opacity-0 flex-col">
+                            <div class="text-xs text-on-surface-variant mt-2 border-t border-outline-variant/10 pt-3">
+                                <strong class="text-on-surface mb-1 block">💬 Community Answer:</strong>
+                                <div class="whitespace-pre-wrap break-words">
+                                    ${escapeHTML(ans1)}
+                                </div>
+                            </div>
+                            
+                            ${otherAnswersHtml ? `
+                            <button onclick="window.toggleOtherAnswers('${cardId}', event)" id="btn-others-${cardId}" data-count="${answers.length - 1}" class="text-[11px] uppercase tracking-wider font-bold text-secondary mt-4 mb-2 text-left self-start flex items-center gap-1 hover:text-[#afc6ff] transition-colors">
+                                SHOW ALL ANSWERS (${answers.length - 1}) <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                            </button>
+                            <div id="others-${cardId}" class="hidden transition-opacity duration-500 opacity-0 flex-col">
+                                ${otherAnswersHtml}
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Read More toggler -->
+                        <div class="mt-auto pt-3 border-transparent z-10 w-full flex justify-start">
+                            <button onclick="window.toggleCardReadMore('${cardId}', event)" id="btn-expand-${cardId}" class="text-xs font-bold text-[#f48225] flex items-center gap-1 hover:text-primary transition-colors py-1">
+                                Read More <span class="material-symbols-outlined text-[14px]">expand_more</span>
+                            </button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+                const sourcesId = 'sources-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                relatedSourcesHtml = `
+                    <div class="mt-8 pt-6 border-t border-outline-variant/10">
+                        <button onclick="toggleSources('${sourcesId}', this)" class="group flex items-center gap-2 px-4 py-2 rounded-full bg-surface-container-highest hover:bg-surface-bright transition-all duration-200 border border-outline-variant/10 text-sm font-semibold mb-4 mx-auto md:mx-0">
+                            <span class="material-symbols-outlined text-sm">search</span>
+                            View Related Questions (${data.sources.length})
+                            <span class="material-symbols-outlined transition-transform group-hover:translate-y-0.5 text-sm toggle-icon">expand_more</span>
+                        </button>
+                        
+                        <div id="${sourcesId}" class="hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full items-start">
+                                ${sourceCardsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let suggestionsHtml = '';
+            const greetingRegex = /^(hi|hello|hey|greetings|help|start)\b/i;
+            if (greetingRegex.test(query.trim())) {
+                const shuffled = [...suggestions].sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, 3);
+                
+                const cardsHtml = selected.map(s => `
+                    <button onclick="submitQuery('${s.text.replace(/'/g, "\\'")}')" class="group p-4 bg-surface-container-lowest hover:bg-surface-bright rounded-xl transition-all duration-200 flex flex-col justify-between h-28 border border-outline-variant/10 text-left shadow-sm">
+                        <span class="material-symbols-outlined mb-2" style="color: ${s.color};" data-icon="${s.icon}">${s.icon}</span>
+                        <span class="text-xs font-semibold text-on-surface ${s.hoverClass} transition-colors leading-tight">${escapeHTML(s.text)}</span>
+                    </button>
+                `).join('');
+                
+                suggestionsHtml = `
+                    <div class="mt-8 pt-6 border-t border-outline-variant/10">
+                        <p class="text-sm font-semibold text-on-surface-variant mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">lightbulb</span> Suggested Questions
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                            ${cardsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const msgHtml = `
+                <div class="flex justify-start mb-4">
+                    <div class="max-w-[95%] lg:max-w-[85%] bg-surface-container-high px-6 py-6 rounded-xl rounded-bl-sm shadow-sm w-full">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[#5b2a00] text-sm" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                            </div>
+                            <span class="text-label-md font-bold uppercase tracking-widest text-[#f48225]">Assistant</span>
+                        </div>
+                        
+                        ${badgeHtml}
+                        
+                        <div class="markdown-body text-on-surface leading-relaxed w-full">
+                            ${renderedMarkdown}
+                        </div>
+                        
+                        ${suggestionsHtml}
+                        ${relatedSourcesHtml}
+                    </div>
+                </div>
+            `;
+            
+            // Insert and then add copy buttons to pre blocks
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = msgHtml;
+            
+            const preBlocks = tempDiv.querySelectorAll('pre');
+            preBlocks.forEach((pre, index) => {
+                const codeBlock = pre.querySelector('code');
+                if (!codeBlock || !codeBlock.textContent.trim()) {
+                    pre.remove();
+                    return;
+                }
+                
+                const lang = (codeBlock.className.replace('language-', '') || 'code').trim();
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = "group relative mt-4 mb-4 rounded-xl overflow-hidden bg-surface-container-lowest border border-outline-variant/10";
+                
+                wrapper.innerHTML = `
+                    <div class="flex items-center justify-between px-4 py-2 bg-surface-container-highest/30 backdrop-blur-md">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                            <span class="text-xs font-mono text-blue-400/80">${escapeHTML(lang)}</span>
+                        </div>
+                        <button onclick="copyCode(this)" class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-highest text-on-surface text-xs hover:bg-surface-bright relative z-10">
+                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <div class="p-4 font-mono text-[13px] leading-6 overflow-x-auto text-on-surface content-area">
+                    </div>
+                `;
+                
+                const contentArea = wrapper.querySelector('.content-area');
+                const newPre = document.createElement('pre');
+                newPre.style.cssText = "background:transparent; padding:0; border:none; margin:0;";
+                const newCode = document.createElement('code');
+                newCode.className = codeBlock.className;
+                newCode.innerHTML = codeBlock.innerHTML;
+                
+                newPre.appendChild(newCode);
+                contentArea.appendChild(newPre);
+                
+                pre.parentNode.replaceChild(wrapper, pre);
+            });
+
+            chatContainer.appendChild(tempDiv.firstElementChild);
+        }
+
+        window.toggleSources = function(id, btn) {
+            const el = document.getElementById(id);
+            const icon = btn.querySelector('.toggle-icon');
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.textContent = 'expand_less';
+            } else {
+                el.classList.add('hidden');
+                icon.textContent = 'expand_more';
+            }
+        }
+
+        window.copyCode = function(btn) {
+            // Traverse DOM to find the actual code content
+            // The structure is .group > flex-header > button (btn)
+            // and .group > p-4 font-mono > pre > code
+            const group = btn.closest('.group');
+            const codeEl = group.querySelector('code');
+            const text = codeEl.innerText || codeEl.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const copyText = btn.querySelector('.copy-text');
+                const icon = btn.querySelector('.material-symbols-outlined');
+                
+                // Temporary success state
+                btn.classList.add('text-primary');
+                copyText.textContent = 'Copied!';
+                icon.textContent = 'check';
+                
+                setTimeout(() => {
+                    btn.classList.remove('text-primary');
+                    copyText.textContent = 'Copy';
+                    icon.textContent = 'content_copy';
+                }, 2000);
+            });
+        }
+
+        function removeElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Voice Input Handling
+        const micBtn = document.getElementById('mic-btn');
+        let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+        let originalText = '';
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                originalText = chatInput.value;
+                if (originalText && !originalText.endsWith(' ')) {
+                    originalText += ' ';
+                }
+                micBtn.classList.add('text-red-500', 'animate-pulse');
+                micBtn.classList.remove('text-on-surface-variant', 'hover:text-primary');
+                micBtn.title = "Listening... Click to stop";
+                chatInput.placeholder = "Listening...";
+            };
+
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                chatInput.value = originalText + finalTranscript + interimTranscript;
+            };
+
+            recognition.onerror = function(event) {
+                if (event.error !== 'no-speech') {
+                    console.error("Speech recognition error:", event.error);
+                }
+                stopListening(true);
+            };
+
+            recognition.onend = function() {
+                // If we didn't manually stop it yet it ended, stop it formally but don't reset text
+                stopListening();
+            };
+        } else {
+            if (micBtn) micBtn.style.display = 'none';
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) {
+                alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+                return;
+            }
+            if (isListening) {
+                stopListening(false);
+            } else {
+                try {
+                    recognition.start();
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        function stopListening(isError = false) {
+            if (isListening) {
+                 isListening = false;
+                 try { recognition.stop(); } catch(e){}
+            }
+            micBtn.classList.remove('text-red-500', 'animate-pulse');
+            micBtn.classList.add('text-on-surface-variant', 'hover:text-primary');
+            micBtn.title = "Start voice input";
+            chatInput.placeholder = "Ask a technical question...";
+        }
+
+        window.toggleCardReadMore = function(cardId, event) {
+            if (event) event.stopPropagation();
+            const preview = document.getElementById(`preview-${cardId}`);
+            const expanded = document.getElementById(`expanded-${cardId}`);
+            const btn = document.getElementById(`btn-expand-${cardId}`);
+
+            if (expanded.classList.contains('hidden')) {
+                // Expand
+                preview.classList.add('hidden');
+                expanded.classList.remove('hidden');
+                // Trigger reflow for opacity animation
+                void expanded.offsetWidth;
+                expanded.classList.remove('opacity-0');
+                expanded.classList.add('opacity-100');
+                btn.innerHTML = `Read Less <span class="material-symbols-outlined text-[14px]">expand_less</span>`;
+            } else {
+                // Collapse
+                preview.classList.remove('hidden');
+                expanded.classList.remove('opacity-100');
+                expanded.classList.add('opacity-0');
+                
+                // Wait for opacity transition before hiding
+                setTimeout(() => {
+                    expanded.classList.add('hidden');
+                }, 300);
+                
+                btn.innerHTML = `Read More <span class="material-symbols-outlined text-[14px]">expand_more</span>`;
+            }
+        };
+
+        window.toggleOtherAnswers = function(cardId, event) {
+            if (event) event.stopPropagation();
+            const others = document.getElementById(`others-${cardId}`);
+            const btn = document.getElementById(`btn-others-${cardId}`);
+            
+            if (others.classList.contains('hidden')) {
+                // Expand
+                others.classList.remove('hidden');
+                void others.offsetWidth;
+                others.classList.remove('opacity-0');
+                others.classList.add('opacity-100');
+                btn.innerHTML = `SHOW LESS ANSWERS <span class="material-symbols-outlined text-[14px]">expand_less</span>`;
+            } else {
+                // Collapse
+                others.classList.remove('opacity-100');
+                others.classList.add('opacity-0');
+                setTimeout(() => {
+                    others.classList.add('hidden');
+                }, 300);
+                
+                const count = btn.getAttribute('data-count');
+                btn.innerHTML = `SHOW ALL ANSWERS (${count}) <span class="material-symbols-outlined text-[14px]">expand_more</span>`;
+            }
+        };
+    </script>
+</body>
+</html>
