@@ -34,21 +34,21 @@ def download_and_initialize():
     hf_token = os.getenv("HF_TOKEN")     # ← add this
 
     hf_hub_download(
-        repo_id   = "retronoob99/stackoverflow-ai-data",
+        repo_id   = "SatyakiMitra/stackoverflow-ai-data",
         filename  = "questions.index",
         repo_type = "dataset",
         local_dir = vector_store_dir,
         token     = hf_token             # ← add token
     )
     hf_hub_download(
-        repo_id   = "retronoob99/stackoverflow-ai-data",
+        repo_id   = "SatyakiMitra/stackoverflow-ai-data",
         filename  = "questions_docs.pkl",
         repo_type = "dataset",
         local_dir = vector_store_dir,
         token     = hf_token             # ← add token
     )
     hf_hub_download(
-        repo_id   = "retronoob99/stackoverflow-ai-data",
+        repo_id   = "SatyakiMitra/stackoverflow-ai-data",
         filename  = "answers_cleaned.parquet",
         repo_type = "dataset",
         local_dir = data_dir,
