@@ -31,23 +31,28 @@ def download_and_initialize():
 
     print("📥 Downloading data from Hugging Face...")
 
+    hf_token = os.getenv("HF_TOKEN")     # ← add this
+
     hf_hub_download(
         repo_id   = "retronoob99/stackoverflow-ai-data",
         filename  = "questions.index",
         repo_type = "dataset",
-        local_dir = vector_store_dir
+        local_dir = vector_store_dir,
+        token     = hf_token             # ← add token
     )
     hf_hub_download(
         repo_id   = "retronoob99/stackoverflow-ai-data",
         filename  = "questions_docs.pkl",
         repo_type = "dataset",
-        local_dir = vector_store_dir
+        local_dir = vector_store_dir,
+        token     = hf_token             # ← add token
     )
     hf_hub_download(
         repo_id   = "retronoob99/stackoverflow-ai-data",
         filename  = "answers_cleaned.parquet",
         repo_type = "dataset",
-        local_dir = data_dir
+        local_dir = data_dir,
+        token     = hf_token             # ← add token
     )
 
     print("✅ Data downloaded!")
@@ -159,5 +164,5 @@ async def chat(request: ChatRequest):
     
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 10000))
+    port = int(os.getenv("PORT", 7860))
     uvicorn.run(app, host="0.0.0.0", port=port)
