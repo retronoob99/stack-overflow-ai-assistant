@@ -109,7 +109,20 @@ class ChatResponse(BaseModel):
     sources: List[SourceCard]
     path: str
 
-# Helath check endpoint
+
+@app.get("/")
+async def root():
+    return {
+        "service": "Stack Overflow AI Assistant API",
+        "status": "ready" if pipeline is not None else "initializing",
+        "endpoints": {
+            "health": "/health",
+            "chat": "/chat",
+            "docs": "/docs"
+        }
+    }
+
+# Health check endpoint
 @app.get("/health")
 async def health():
     if pipeline is None:
