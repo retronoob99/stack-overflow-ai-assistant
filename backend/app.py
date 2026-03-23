@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from rag_pipeline import RAGPipeline
 import uvicorn
 from huggingface_hub import hf_hub_download
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 
@@ -16,20 +18,9 @@ load_dotenv()
 # Initialize RAG Pipeline
 pipeline: Optional[RAGPipeline] = None
 
-# Startup event to initialize the RAG pipeline
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global pipeline
+executor = ThreadPoolExecutor(max_workers=1)
 
-    import asyncio
-
-    # Start downloading in background
-    asyncio.create_task(initialize_pipeline())
-
-    yield
-    print("🛑 Shutting down...")
-
-async def initialize_pipeline():
+def download_and_initialize():
     global pipeline
 
     data_dir         = "/tmp/data"
@@ -67,6 +58,15 @@ async def initialize_pipeline():
         score_threshold   = 0.5
     )
     print("✅ RAG Pipeline ready!")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── Start download in background thread ───────────────────────────────
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(executor, download_and_initialize)
+    print("🚀 Server started! Pipeline initializing in background...")
+    yield
+    print("🛑 Shutting down...")
 
 # Initialize FastAPI app
 app = FastAPI(
