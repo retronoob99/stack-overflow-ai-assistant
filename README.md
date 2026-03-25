@@ -8,7 +8,8 @@ A full-stack RAG-based AI assistant grounded in 500K real Stack Overflow questio
 
 ## 📸 Screenshots
 
-> ![Screenshot of the web page](image.png)
+> <img width="1877" height="907" alt="image" src="https://github.com/user-attachments/assets/f281f427-2c91-4de5-ad04-03673b4acd6f" />
+
 
 ---
 
