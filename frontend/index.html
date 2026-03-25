@@ -345,25 +345,35 @@
              document.querySelectorAll('[id^="menu-"]').forEach(el => {
                  el.classList.add('hidden');
                  el.classList.remove('flex');
+                 // Reset z-index on the parent history item
+                 const parent = el.closest('.group');
+                 if (parent) parent.style.zIndex = '';
              });
         });
 
         function toggleMenu(id, event) {
             event.stopPropagation();
+            // Close all other menus and reset their parent z-index
             document.querySelectorAll('[id^="menu-"]').forEach(el => {
                 if (el.id !== `menu-${id}`) {
                     el.classList.add('hidden');
                     el.classList.remove('flex');
+                    // Reset z-index on the parent history item
+                    el.closest('.group').style.zIndex = '';
                 }
             });
             const menu = document.getElementById(`menu-${id}`);
             if (menu) {
+                const parentItem = menu.closest('.group');
                 if (menu.classList.contains('hidden')) {
                     menu.classList.remove('hidden');
                     menu.classList.add('flex');
+                    // Raise parent z-index so menu renders above sibling items
+                    parentItem.style.zIndex = '10';
                 } else {
                     menu.classList.add('hidden');
                     menu.classList.remove('flex');
+                    parentItem.style.zIndex = '';
                 }
             }
         }
