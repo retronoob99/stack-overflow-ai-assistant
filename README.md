@@ -276,8 +276,6 @@ stack-overflow-ai-assistant/
 
 MIT License — feel free to use, modify and build on this project.
 
----
 
-## 👤 Author
 
 
