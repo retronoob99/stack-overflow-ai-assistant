@@ -954,6 +954,17 @@
                 btn.innerHTML = `SHOW ALL ANSWERS (${count}) <span class="material-symbols-outlined text-[14px]">expand_more</span>`;
             }
         };
+
+        // Warm up the backend on page load
+(async function warmUpBackend() {
+    try {
+        await fetch('https://SatyakiMitra-stackoverflow-ai-backend.hf.space/health', {
+            method: 'GET',
+        });
+    } catch(e) {
+        // Silent fail - just a warm-up attempt
+    }
+})();
     </script>
 </body>
 </html>
